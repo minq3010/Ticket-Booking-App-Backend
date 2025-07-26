@@ -10,6 +10,8 @@ import (
 	"gorm.io/gorm/logger"
 )
 
+var dbInstance *gorm.DB // <--- Thêm biến toàn cục
+
 func Init(config *config.EnvConfig, DBMigrator func(*gorm.DB) error) *gorm.DB {
 	uri := fmt.Sprintf(`
 		host=%s user=%s dbname=%s password=%s sslmode=%s port=%s`,
@@ -30,5 +32,12 @@ func Init(config *config.EnvConfig, DBMigrator func(*gorm.DB) error) *gorm.DB {
 		log.Fatalf("Unable to migrate: %v", err)
 	}
 
+	dbInstance = db // <--- Lưu lại instance
+
 	return db
+}
+
+// Hàm này để các nơi khác lấy lại instance DB
+func GetDB() *gorm.DB {
+	return dbInstance
 }

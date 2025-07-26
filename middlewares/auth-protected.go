@@ -19,16 +19,16 @@ func AuthProtected(db *gorm.DB) fiber.Handler {
 
 		if authHeader == "" {
 			log.Warn("empty athorization header")
-			
+
 			return ctx.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{
 				"status":  "fail",
 				"message": "Unauthorized",
-			})	
+			})
 		}
 		tokenParts := strings.Split(authHeader, " ")
 
 		if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
-			log.Warn("invalid  token parts")
+			log.Warn("invalid token parts")
 
 			return ctx.Status(fiber.StatusUnauthorized).JSON(&fiber.Map{
 				"status":  "fail",
@@ -44,7 +44,7 @@ func AuthProtected(db *gorm.DB) fiber.Handler {
 			}
 			return secret, nil
 		})
-		
+
 		if err != nil || !token.Valid {
 			log.Warn("invalid token")
 
@@ -55,7 +55,6 @@ func AuthProtected(db *gorm.DB) fiber.Handler {
 		}
 
 		userId := token.Claims.(jwt.MapClaims)["id"]
-
 		if err := db.Model(&models.User{}).Where("id = ?", userId).Error; errors.Is(err, gorm.ErrRecordNotFound) {
 			log.Warn("user not found in the db")
 
@@ -69,3 +68,27 @@ func AuthProtected(db *gorm.DB) fiber.Handler {
 		return ctx.Next()
 	}
 }
+
+func ManagerOnly() fiber.Handler {
+    return func(ctx *fiber.Ctx) error {
+        // Lấy userId từ ctx.Locals (đã được set bởi middleware JWT trước đó)
+        userId, ok := ctx.Locals("userId").(float64) // JWT thường trả về số kiểu float64
+        if !ok {
+            return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "status":  "fail",
+                "message": "User ID not found in context",
+            })
+        }
+
+        // Kiểm tra nếu userId != 1 → Không phải Manager
+        if uint(userId) != 1 { 
+            return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+                "status":  "fail",
+                "message": "Access denied: You are not the Manager",
+            })
+        }
+
+        return ctx.Next()
+    }
+}
+
