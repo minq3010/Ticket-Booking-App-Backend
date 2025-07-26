@@ -1,6 +1,6 @@
 # Bỏ qua các file hệ thống macOS
 .DS_Store
-
+.vscode
 # Bỏ thư mục build hoặc output
 build/
 dist/
