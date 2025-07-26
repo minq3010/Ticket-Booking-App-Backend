@@ -32,12 +32,15 @@ func main() {
 	// routing
 	server := app.Group("/api")
 	handlers.NewAuthHandler(server.Group("/auth"), authService)
-
+	
 	privateRoutes := server.Use(middlewares.AuthProtected(db))
-
+	
 	// handler
 	handlers.NewEventHandler(privateRoutes.Group("/event"), eventRepository)
 	handlers.NewTicketHandler(privateRoutes.Group("/ticket"), ticketRepository)
 	handlers.NewPaymentHandler(privateRoutes.Group("/payment"), paymentRepository, eventRepository, ticketRepository)	
-	app.Listen(fmt.Sprint(":" + envConfig.ServerPort))
+	// for manager only
+	server.Get("/stats", middlewares.ManagerOnly(), handlers.GetStatisticsHandler)
+
+	app.Listen(fmt.Sprint(":" + envConfig.DBPort))
 }

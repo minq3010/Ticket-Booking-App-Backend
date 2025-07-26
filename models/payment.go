@@ -6,14 +6,14 @@ import (
 )
 
 type Payment struct {
-	ID            uint      `gorm:"primaryKey"`
-	OrderID       string    `gorm:"unique;not null"`         // Mã giao dịch duy nhất
-	TicketID      string    `gorm:"default:null"`            // Có thể null nếu chưa tạo vé
-	EventID       uint      `gorm:"not null"`                // Sự kiện liên quan
-	UserID        uint      `gorm:"not null"`                // Người thực hiện thanh toán
-	Amount        int       `gorm:"not null"`                // Số tiền thanh toán
-	Status        string    `gorm:"default:'pending'"`       // pending / success / fail
-	PaymentMethod string    `gorm:"default:'vnpay'"`         // vnpay / momo / ...
+	ID            uint      `json:"id" gorm:"primaryKey"`
+	OrderID       string    `json:"order_id" gorm:"unique;not null"`         // Mã giao dịch duy nhất
+	TicketID      string    `json:"ticket_id" gorm:"default:null"`            // Có thể null nếu chưa tạo vé
+	EventID       uint      `json:"event_id" gorm:"not null"`                // Sự kiện liên quan
+	UserID        uint      `json:"user_id" gorm:"not null"`                // Người thực hiện thanh toán
+	Amount        int       `json:"amount" gorm:"not null"`                // Số tiền thanh toán
+	Status        string    `json:"status" gorm:"default:'pending'"`       // pending / success / fail
+	PaymentMethod string    `json:"method" gorm:"default:'vnpay'"`         // vnpay / momo / ...
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

@@ -46,7 +46,7 @@ func (h *PaymentHandler) CreateVnpayCheckout(c *fiber.Ctx) error {
 		TicketID:      "", // chưa có ticket
 		EventID:       event.ID,
 		UserID:        userId,
-		Amount:        event.Price, // ép kiểu nếu cần
+		Amount:        int(event.Price), // ép kiểu nếu cần
 		Status:        "pending",
 		PaymentMethod: "vnpay",
 	}
@@ -76,15 +76,15 @@ func (h *PaymentHandler) HandleVnpayReturn(c *fiber.Ctx) error {
 	orderID := c.Query("vnp_TxnRef")
 	responseCode := c.Query("vnp_ResponseCode")
 	signature := c.Query("vnp_SecureHash")
-	
+
 	// 🔧 Cách 2: Hoặc tạo map từ query string thủ công
 	queryParams := make(map[string]string)
-	
+
 	// Lấy tất cả query parameters
 	c.Context().QueryArgs().VisitAll(func(key, value []byte) {
 		queryParams[string(key)] = string(value)
 	})
-	
+
 	// 👉 Debug log để kiểm tra
 	fmt.Println("🔍 OrderID:", orderID)
 	fmt.Println("🔍 ResponseCode:", responseCode)

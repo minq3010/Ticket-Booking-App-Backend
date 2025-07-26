@@ -21,3 +21,8 @@ sysinfo.txt
 *.pidb
 *.booproj
 
+# Air
+post_cmd.txt
+pre_cmd.txt
+tmp
+.env

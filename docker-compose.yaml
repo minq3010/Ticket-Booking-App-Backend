@@ -2,46 +2,18 @@ version: "3.9"
 
 services:
   app:
-    tty: true 
-    restart: always
-    image: ticket-booking
     container_name: ticket-booking
     build: .
     ports:
-      - 3000:3000
+      - "26367:26367"
     env_file:
       - .env
-    networks:
-      - application
-    depends_on:
-      db:
-        condition: service_healthy
     volumes:
       - .:/src/app
-    command: air -c .air.toml
-  
-  db:
-    image: postgres:alpine
-    container_name: ticket-booking-db
-    environment:
-      - POSTGRES_HOST=${DB_HOST}
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    ports:
-      - 5432:5432
-    volumes:
-      - postgres-db:/var/lib/postgresql/data
     networks:
-      - application
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      - app-network
+    command: air -c .air.toml
+    restart: always
 
 networks:
-  application:
-
-volumes:
-  postgres-db:
+  app-network:
