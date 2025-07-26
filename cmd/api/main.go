@@ -25,19 +25,19 @@ func main() {
 	eventRepository := repositories.NewEventRepository(db)
 	ticketRepository := repositories.NewTicketRepository(db)
 	authRepository := repositories.NewAuthRepository(db)
-
 	// service
 	authService := services.NewAuthService(authRepository)
 
 	// routing
 	server := app.Group("/api")
 	handlers.NewAuthHandler(server.Group("/auth"), authService)
-
+	
 	privateRoutes := server.Use(middlewares.AuthProtected(db))
-
+	
 	// handler
 	handlers.NewEventHandler(privateRoutes.Group("/event"), eventRepository)
 	handlers.NewTicketHandler(privateRoutes.Group("/ticket"), ticketRepository)
-
+	// for manager only
+	server.Get("/stats", middlewares.ManagerOnly(), handlers.GetStatisticsHandler)
 	app.Listen(fmt.Sprint(":" + envConfig.DBPort))
 }
