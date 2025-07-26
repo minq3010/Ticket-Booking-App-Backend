@@ -9,20 +9,15 @@ dist/
 # Node.js
 node_modules/
 
-# Unity
-[Ll]ibrary/
-[Tt]emp/
-[Bb]uild/
-[Bb]uilds/
-[Oo]bj/
-sysinfo.txt
-*.user
-*.suo
-*.pidb
-*.booproj
-
 # Air
 post_cmd.txt
 pre_cmd.txt
 tmp
+#ENV
 .env
+
+# Bỏ qua các file cấu hình của IDE
+*.vscode/   
+
+go.mod
+go.sum
