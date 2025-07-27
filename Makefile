@@ -28,3 +28,4 @@ logs:
 # Clean up Docker environment
 prune:
 	@docker system prune -f
+

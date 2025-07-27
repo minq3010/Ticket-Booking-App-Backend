@@ -13,3 +13,4 @@ func GetStatisticsHandler(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON(stats)
 }
+

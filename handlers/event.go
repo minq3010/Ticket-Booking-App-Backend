@@ -109,7 +109,6 @@ func (h *EventHandler) UpdateOne(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// ✅ Kiểm tra nếu có field "price" thì không được < 0
 	if val, ok := updateData["price"]; ok {
 		switch v := val.(type) {
 		case float64:
@@ -169,8 +168,8 @@ func NewEventHandler(router fiber.Router, repository models.EventRepository) {
 		repository: repository,
 	}
 
-	router.Get("/", handler.GetMany)
 	router.Post("/", handler.CreateOne)
+	router.Get("/", handler.GetMany)
 	router.Get("/:eventId", handler.GetOne)
 	router.Put("/:eventId", handler.UpdateOne)
 	router.Delete("/:eventId", handler.DeleteOne)

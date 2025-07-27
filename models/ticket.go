@@ -11,7 +11,7 @@ type Ticket struct {
 	UserID 		uint		`json:"userId" gorm:"foreignkey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Event 		Event		`json:"event" gorm:"foreignkey:EventID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	Entered 	bool		`json:"entered" default:"false"`
-	Price		int			`json:"price"`
+	// Price		int			`json:"price"`
 	CreatedAt 	time.Time	`json:"createdAt"`
 	UpdatedAt	time.Time   `json:"updatedAt"`
 }
