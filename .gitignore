@@ -13,8 +13,9 @@ node_modules/
 post_cmd.txt
 pre_cmd.txt
 tmp
-#ENV
+#config
 .env
+.air.toml
 
 # Bỏ qua các file cấu hình của IDE
 *.vscode/   
