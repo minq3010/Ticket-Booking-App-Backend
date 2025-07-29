@@ -92,3 +92,23 @@ func ManagerOnly() fiber.Handler {
     }
 }
 
+func UserSelfOnly() fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		userIdFromToken, ok := ctx.Locals("userId").(float64)
+		if !ok {
+			return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+                "status":  "fail",
+                "message": "User ID not found in context",
+            })
+		}
+
+		userIdFromParam := ctx.Params("userId")
+		if userIdFromParam != fmt.Sprintf("%.0f", userIdFromToken) {
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"status": "fail",
+				"message": "Access denied: You can only access your own info",
+			})
+		}
+	return ctx.Next()
+	}
+}

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"time"
 
 	"gorm.io/gorm"
@@ -9,17 +10,29 @@ import (
 type UserRole string
 
 const (
-	Manager UserRole = "manager"
+	Manager  UserRole = "manager"
 	Attendee UserRole = "attendee"
 )
 
 type User struct {
-	ID        uint      `json:"id" gorm:"primarykey"`
-	Email     string    `json:"email" gorm:"text;not null"`
-	Role      UserRole  `json:"role" gorm:"text;default:attendee"`
-	Password  string    `json:"-"` // Do not compute the password in json
+	ID        uint      `json:"id"        gorm:"primarykey"`
+	Email     string    `json:"email"     gorm:"text;not null"`
+	Role      UserRole  `json:"role"      gorm:"text;default:attendee"`
+	Avatar    string    `json:"avatar"`
+	Name      string    `json:"name"`
+	Phone     string    `json:"phone"`
+	Password  string    `json:"-"` 
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type UserRepository interface {
+	GetUserInfo(ctx context.Context, userId uint) (*User, error)
+	UpdateUserInfo(
+		ctx context.Context,
+		userId uint,
+		updateData map[string]interface{},
+	) (*User, error)
 }
 
 func (u *User) AfterCreate(db *gorm.DB) (err error) {

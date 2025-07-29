@@ -23,6 +23,7 @@ func main() {
 	// repositories
 	eventRepository := repositories.NewEventRepository(db)
 	ticketRepository := repositories.NewTicketRepository(db)
+	userRepository := repositories.NewUserRepository(db)
 	authRepository := repositories.NewAuthRepository(db)
 	paymentRepository := repositories.NewPaymentRepository(db)
 	// service
@@ -31,21 +32,22 @@ func main() {
 	// routing
 	server := app.Group("/api")
 	handlers.NewAuthHandler(server.Group("/auth"), authService)
-
 	privateRoutes := server.Use(middlewares.AuthProtected(db))
 
 	// handler
 	handlers.NewEventHandler(privateRoutes.Group("/event"), eventRepository)
 	handlers.NewTicketHandler(privateRoutes.Group("/ticket"), ticketRepository)
+	handlers.NewUserHandler(privateRoutes.Group("/user"), userRepository)
 	handlers.NewPaymentHandler(
 		privateRoutes.Group("/payment"),
 		paymentRepository,
 		eventRepository,
 		ticketRepository,
 	)
+
 	// for manager only
 	server.Get("/stats", middlewares.ManagerOnly(), handlers.GetStatisticsHandler)
 
+	// port
 	app.Listen(fmt.Sprint(":" + envConfig.DBPort))
 }
-

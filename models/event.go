@@ -13,6 +13,8 @@ type Event struct {
 	Location              string    `json:"location"`
 	TotalTicketsPurchased int64     `json:"totalTicketsPurchased" gorm:"-"`
 	TotalTicketsEntered   int64     `json:"totalTicketsEntered" gorm:"-"`
+	ImageURL              string    `json:"imageUrl"`
+	Description           string    `json:"description"`	
 	Price                 int64     `json:"price" gorm:"default:0"`
 	Date                  time.Time `json:"date"`
 	CreatedAt             time.Time `json:"createdAt"`
