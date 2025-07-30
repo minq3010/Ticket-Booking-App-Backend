@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{.Title}}</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px 20px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            color: #333;
+            border-radius: 10px;
+            padding: 40px;
+            max-width: 400px;
+            margin: 0 auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        .error-icon {
+            font-size: 80px;
+            color: #e74c3c;
+            margin-bottom: 20px;
+        }
+        button {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #c0392b;
+        }
+        .highlight {
+            background: #ffebee;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-icon">❌</div>
+        <h1>{{.Heading}}</h1>
+        <p>{{.Message}}</p>
+        {{if .OrderID}}
+        <div class="highlight">
+            <p><strong>Mã đơn hàng:</strong> {{.OrderID}}</p>
+        </div>
+        {{end}}
+        {{if .ErrorCode}}
+        <div class="highlight">
+            <p><strong>Mã lỗi:</strong> {{.ErrorCode}}</p>
+        </div>
+        {{end}}
+        <p>{{.SubMessage}}</p>
+        <button onclick="closeWindow()">Đóng trang này</button>
+    </div>
+    <script>
+        function closeWindow() {
+            window.close();
+        }
+        setTimeout(() => {
+            window.close();
+        }, 5000);
+    </script>
+</body>
+</html>

@@ -34,6 +34,31 @@ type MomoPaymentResponse struct {
 	Message string `json:"message"`
 }
 
+func GenerateMomoIPNSignature(params map[string]string, secretKey string) string {
+    // IPN signature format khác với create payment
+    raw := fmt.Sprintf(
+        "accessKey=%s&amount=%s&extraData=%s&message=%s&orderId=%s&orderInfo=%s&orderType=%s&partnerCode=%s&payType=%s&requestId=%s&responseTime=%s&resultCode=%s&transId=%s",
+        params["accessKey"],
+        params["amount"],
+        params["extraData"],
+        params["message"],
+        params["orderId"],
+        params["orderInfo"],
+        params["orderType"],
+        params["partnerCode"],
+        params["payType"],
+        params["requestId"],
+        params["responseTime"],
+        params["resultCode"],
+        params["transId"],
+    )
+
+    h := hmac.New(sha256.New, []byte(secretKey))
+    h.Write([]byte(raw))
+    fmt.Println("🔐 IPN Raw signature string:", raw)
+    return hex.EncodeToString(h.Sum(nil))
+}
+
 func GenerateMomoSignature(params map[string]string, secretKey string) string {
 	raw := fmt.Sprintf(
 		"accessKey=%s&amount=%s&extraData=%s&ipnUrl=%s&orderId=%s&orderInfo=%s&partnerCode=%s&redirectUrl=%s&requestId=%s&requestType=%s",
@@ -99,6 +124,12 @@ func CreateMomoPayment(orderID string, amount int) (*MomoPaymentResponse, error)
 		Lang: "vi",
 		AutoCapture: true,
 	}
+	 // ✅ Debug payload trước khi gửi
+    fmt.Printf("🚀 MoMo Payload:\n")
+    fmt.Printf("  OrderID: %s\n", payload.OrderID)
+    fmt.Printf("  OrderInfo: %s\n", payload.OrderInfo)
+    fmt.Printf("  RedirectUrl: %s\n", payload.RedirectUrl)
+    fmt.Printf("  Amount: %s\n", payload.Amount)
 
 	jsonPayload, _ := json.Marshal(payload)
 	resp, err := http.Post(endpoint, "application/json", bytes.NewBuffer(jsonPayload))
@@ -110,4 +141,8 @@ func CreateMomoPayment(orderID string, amount int) (*MomoPaymentResponse, error)
 	var momoResp MomoPaymentResponse
 	err = json.NewDecoder(resp.Body).Decode(&momoResp)
 	return &momoResp, err
+}
+
+func GenerateOrderID(userID uint, eventID uint) string {
+	return fmt.Sprintf("ORDER_%d_%d_%d", userID, eventID, time.Now().Unix())
 }

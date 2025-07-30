@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"context"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/minq3010/Backend-React-Native-App/models"
+	"github.com/minq3010/Backend-React-Native-App/utils"
 )
 
 type EventHandler struct {
@@ -61,13 +63,78 @@ func (h *EventHandler) CreateOne(ctx *fiber.Ctx) error {
 	context, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	// Parse dữ liệu từ body, bao gồm cả price
-	if err := ctx.BodyParser(event); err != nil {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(&fiber.Map{
-			"status":  "fail",
-			"message": err.Error(),
-			"data":    nil,
-		})
+	// ✅ Parse multipart form để hỗ trợ file upload
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		// Fallback to JSON parsing if not multipart
+		if err := ctx.BodyParser(event); err != nil {
+			return ctx.Status(fiber.StatusUnprocessableEntity).JSON(&fiber.Map{
+				"status":  "fail",
+				"message": "Cannot parse request: " + err.Error(),
+				"data":    nil,
+			})
+		}
+	} else {
+		// ✅ Lấy các trường text từ form-data
+		if names, ok := form.Value["name"]; ok && len(names) > 0 {
+			event.Name = names[0]
+		}
+		if locations, ok := form.Value["location"]; ok && len(locations) > 0 {
+			event.Location = locations[0]
+		}
+		if descriptions, ok := form.Value["description"]; ok && len(descriptions) > 0 {
+			event.Description = descriptions[0]
+		}
+		if prices, ok := form.Value["price"]; ok && len(prices) > 0 {
+			if price, err := strconv.ParseInt(prices[0], 10, 64); err == nil {
+				event.Price = price
+			}
+		}
+		if dates, ok := form.Value["date"]; ok && len(dates) > 0 {
+			if date, err := time.Parse(time.RFC3339, dates[0]); err == nil {
+				event.Date = date
+			}
+		}
+
+		// ✅ Xử lý file image upload
+		if files, ok := form.File["image"]; ok && len(files) > 0 {
+			file := files[0]
+
+			// Tạo thư mục tmp nếu chưa có
+			if err := os.MkdirAll("./tmp", os.ModePerm); err != nil {
+				return ctx.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
+					"status":  "fail",
+					"message": "Cannot create tmp folder: " + err.Error(),
+					"data":    nil,
+				})
+			}
+
+			// Lưu file tạm thời
+			savePath := "./tmp/" + file.Filename
+			if err := ctx.SaveFile(file, savePath); err != nil {
+				return ctx.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
+					"status":  "fail",
+					"message": "Cannot save file: " + err.Error(),
+					"data":    nil,
+				})
+			}
+
+			// Upload lên Cloudinary
+			imageUrl, err := utils.UploadImageToCloudinary(savePath)
+
+			// Xóa file tạm
+			os.Remove(savePath)
+
+			if err != nil {
+				return ctx.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
+					"status":  "fail",
+					"message": "Cannot upload image: " + err.Error(),
+					"data":    nil,
+				})
+			}
+
+			event.ImageURL = imageUrl
+		}
 	}
 
 	// ✅ Validate giá vé
@@ -78,7 +145,15 @@ func (h *EventHandler) CreateOne(ctx *fiber.Ctx) error {
 		})
 	}
 
-	event, err := h.repository.CreateOne(context, event)
+	// ✅ Validate required fields
+	if event.Name == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"status":  "fail",
+			"message": "Event name is required",
+		})
+	}
+
+	event, err = h.repository.CreateOne(context, event)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"status":  "fail",
@@ -98,27 +173,104 @@ func (h *EventHandler) UpdateOne(ctx *fiber.Ctx) error {
 	eventId, _ := strconv.Atoi(ctx.Params("eventId"))
 	updateData := make(map[string]interface{})
 
-	context, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	context, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
 	defer cancel()
 
-	if err := ctx.BodyParser(&updateData); err != nil {
-		return ctx.Status(fiber.StatusUnprocessableEntity).JSON(&fiber.Map{
-			"status":  "fail",
-			"message": err.Error(),
-			"data":    nil,
-		})
+	// Try to parse as multipart form first (like user handler)
+	form, err := ctx.MultipartForm()
+	if err != nil {
+		// If multipart fails, try JSON parsing into a struct then convert to map
+		event := &models.Event{}
+		if err := ctx.BodyParser(event); err != nil {
+			return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+				"status":  "fail",
+				"message": "Cannot parse request: " + err.Error(),
+				"data":    nil,
+			})
+		}
+
+		// Convert struct to map for repository
+		if event.Name != "" {
+			updateData["name"] = event.Name
+		}
+		if event.Description != "" {
+			updateData["description"] = event.Description
+		}
+		if event.Location != "" {
+			updateData["location"] = event.Location
+		}
+		if !event.Date.IsZero() {
+			updateData["date"] = event.Date
+		}
+		if event.Price != 0 {
+			updateData["price"] = event.Price
+		}
+		if event.ImageURL != "" {
+			updateData["image_url"] = event.ImageURL
+		}
+	} else {
+		// Handle multipart form data (like user handler)
+		if names, ok := form.Value["name"]; ok && len(names) > 0 {
+			updateData["name"] = names[0]
+		}
+		if descriptions, ok := form.Value["description"]; ok && len(descriptions) > 0 {
+			updateData["description"] = descriptions[0]
+		}
+		if locations, ok := form.Value["location"]; ok && len(locations) > 0 {
+			updateData["location"] = locations[0]
+		}
+		if dates, ok := form.Value["date"]; ok && len(dates) > 0 {
+			if date, err := time.Parse(time.RFC3339, dates[0]); err == nil {
+				updateData["date"] = date
+			}
+		}
+		if prices, ok := form.Value["price"]; ok && len(prices) > 0 {
+			if price, err := strconv.ParseInt(prices[0], 10, 64); err == nil {
+				updateData["price"] = price
+			}
+		}
+
+		// Handle image upload (like user handler)
+		if files, ok := form.File["image"]; ok && len(files) > 0 {
+			file := files[0]
+			if err := os.MkdirAll("./tmp", os.ModePerm); err != nil {
+				return ctx.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
+					"status":  "fail",
+					"message": "Cannot create tmp folder: " + err.Error(),
+					"data":    nil,
+				})
+			}
+			savePath := "./tmp/" + file.Filename
+			if err := ctx.SaveFile(file, savePath); err != nil {
+				return ctx.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
+					"status":  "fail",
+					"message": "Cannot save file: " + err.Error(),
+					"data":    nil,
+				})
+			}
+			imageUrl, err := utils.UploadImageToCloudinary(savePath)
+			os.Remove(savePath)
+			if err != nil {
+				return ctx.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
+					"status":  "fail",
+					"message": "Cannot upload image: " + err.Error(),
+					"data":    nil,
+				})
+			}
+			updateData["image_url"] = imageUrl
+		}
 	}
 
+	// Validate price if provided
 	if val, ok := updateData["price"]; ok {
 		switch v := val.(type) {
 		case float64:
-			if int(v) < 0 {
+			if v < 0 {
 				return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 					"status":  "fail",
 					"message": "Price must be >= 0",
 				})
 			}
-			updateData["price"] = int(v)
 		case int:
 			if v < 0 {
 				return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -138,7 +290,7 @@ func (h *EventHandler) UpdateOne(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(fiber.StatusCreated).JSON(&fiber.Map{
+	return ctx.Status(fiber.StatusOK).JSON(&fiber.Map{
 		"status":  "success",
 		"message": "Event updated",
 		"data":    event,

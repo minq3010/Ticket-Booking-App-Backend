@@ -15,7 +15,20 @@ import (
 
 func AuthProtected(db *gorm.DB) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
+		path := ctx.Path()
+		if path == "/api/payment-callback/momo-return" ||
+			path == "/api/payment-callback/momo-ipn" {
+			fmt.Printf("🔓 Skipping auth for callback: %s\n", path)
+			return ctx.Next()
+		}
+
 		authHeader := ctx.Get("Authorization")
+		if authHeader == "" {
+			fmt.Printf("[Warn] empty authorization header for path: %s\n", path)
+			return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "missing authorization header",
+			})
+		}
 
 		if authHeader == "" {
 			log.Warn("empty athorization header")
@@ -70,26 +83,26 @@ func AuthProtected(db *gorm.DB) fiber.Handler {
 }
 
 func ManagerOnly() fiber.Handler {
-    return func(ctx *fiber.Ctx) error {
-        // Lấy userId từ ctx.Locals (đã được set bởi middleware JWT trước đó)
-        userId, ok := ctx.Locals("userId").(float64) // JWT thường trả về số kiểu float64
-        if !ok {
-            return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                "status":  "fail",
-                "message": "User ID not found in context",
-            })
-        }
+	return func(ctx *fiber.Ctx) error {
+		// Lấy userId từ ctx.Locals (đã được set bởi middleware JWT trước đó)
+		userId, ok := ctx.Locals("userId").(float64) // JWT thường trả về số kiểu float64
+		if !ok {
+			return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"status":  "fail",
+				"message": "User ID not found in context",
+			})
+		}
 
-        // Kiểm tra nếu userId != 1 → Không phải Manager
-        if uint(userId) != 1 { 
-            return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
-                "status":  "fail",
-                "message": "Access denied: You are not the Manager",
-            })
-        }
+		// Kiểm tra nếu userId != 1 → Không phải Manager
+		if uint(userId) != 1 {
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"status":  "fail",
+				"message": "Access denied: You are not the Manager",
+			})
+		}
 
-        return ctx.Next()
-    }
+		return ctx.Next()
+	}
 }
 
 func UserSelfOnly() fiber.Handler {
@@ -97,18 +110,18 @@ func UserSelfOnly() fiber.Handler {
 		userIdFromToken, ok := ctx.Locals("userId").(float64)
 		if !ok {
 			return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-                "status":  "fail",
-                "message": "User ID not found in context",
-            })
+				"status":  "fail",
+				"message": "User ID not found in context",
+			})
 		}
 
 		userIdFromParam := ctx.Params("userId")
 		if userIdFromParam != fmt.Sprintf("%.0f", userIdFromToken) {
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"status": "fail",
+				"status":  "fail",
 				"message": "Access denied: You can only access your own info",
 			})
 		}
-	return ctx.Next()
+		return ctx.Next()
 	}
 }

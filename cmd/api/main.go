@@ -38,12 +38,24 @@ func main() {
 	handlers.NewEventHandler(privateRoutes.Group("/event"), eventRepository)
 	handlers.NewTicketHandler(privateRoutes.Group("/ticket"), ticketRepository)
 	handlers.NewUserHandler(privateRoutes.Group("/user"), userRepository)
+
 	handlers.NewPaymentHandler(
 		privateRoutes.Group("/payment"),
 		paymentRepository,
 		eventRepository,
 		ticketRepository,
 	)
+	handlers.NewPaymentCallbackHandler(
+		server.Group("/payment-callback"), // Không qua privateRoutes
+		paymentRepository,
+		eventRepository,
+		ticketRepository,
+	)
+	 // ✅ Debug: Log tất cả routes
+    fmt.Println("🔧 Registered routes:")
+    fmt.Println("  POST /api/payment/momo (with auth)")
+    fmt.Println("  GET  /api/payment-callback/momo-return (no auth)")
+    fmt.Println("  POST /api/payment-callback/momo-ipn (no auth)")
 
 	// for manager only
 	server.Get("/stats", middlewares.ManagerOnly(), handlers.GetStatisticsHandler)
