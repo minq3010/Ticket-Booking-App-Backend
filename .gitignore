@@ -22,3 +22,13 @@ tmp
 
 go.mod
 go.sum
+
+Backend-React-Native-App
+# Bỏ qua các file nhị phân
+*.apk
+*.ipa
+*.exe
+*.dll
+*.so
+*.dmg
+*.bin
