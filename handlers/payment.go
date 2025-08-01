@@ -17,7 +17,7 @@ type PaymentHandler struct {
 	TicketRepo  models.TicketRepository
 }
 
-// ✅ POST /payment/momo
+//  POST /payment/momo
 func (h *PaymentHandler) CreateMomoCheckout(c *fiber.Ctx) error {
 	type Body struct {
 		EventID uint `json:"eventId"`
@@ -72,9 +72,9 @@ func (h *PaymentHandler) CreateMomoCheckout(c *fiber.Ctx) error {
 	})
 }
 
-// ✅ GET /payment/momo-return
+//  GET /payment/momo-return
 func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
-	// ✅ Debug tất cả query parameters
+	//  Debug tất cả query parameters
 	fmt.Printf("🔍 All query params: %+v\n", c.Queries())
 
 	// Thử nhiều cách lấy orderID
@@ -93,9 +93,9 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 
 	fmt.Printf("🔍 MoMo Callback - OrderID: '%s', ResultCode: '%s'\n", orderID, resultCode)
 
-	// ✅ Nếu thiếu parameters
+	//  Nếu thiếu parameters
 	if orderID == "" || resultCode == "" {
-		fmt.Printf("❌ Missing parameters - OrderID: '%s', ResultCode: '%s'\n", orderID, resultCode)
+		fmt.Printf("Missing parameters - OrderID: '%s', ResultCode: '%s'\n", orderID, resultCode)
 		return utils.RenderPaymentError(c, utils.PaymentPageData{
 			Title:      "Lỗi thanh toán",
 			Heading:    "Lỗi thanh toán!",
@@ -104,9 +104,9 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 		})
 	}
 
-	// ✅ Kiểm tra result code trước
+	//  Kiểm tra result code trước
 	if resultCode != "0" {
-		fmt.Printf("❌ Payment failed with code: %s\n", resultCode)
+		fmt.Printf("Payment failed with code: %s\n", resultCode)
 		return utils.RenderPaymentError(c, utils.PaymentPageData{
 			Title:      "Thanh toán thất bại",
 			Heading:    "Thanh toán thất bại!",
@@ -119,7 +119,7 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 	ctx := context.Background()
 	payment, err := h.PaymentRepo.GetByOrderID(ctx, orderID)
 	if err != nil {
-		fmt.Printf("❌ Payment not found: %v\n", err)
+		fmt.Printf("Payment not found: %v\n", err)
 		return utils.RenderPaymentError(c, utils.PaymentPageData{
 			Title:      "Không tìm thấy đơn hàng",
 			Heading:    "Không tìm thấy đơn hàng!",
@@ -129,9 +129,9 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 		})
 	}
 
-	// ✅ Tránh xử lý duplicate
+	//  Tránh xử lý duplicate
 	if payment.Status == "success" {
-		fmt.Println("✅ Payment already processed, showing success page")
+		fmt.Println(" Payment already processed, showing success page")
 		return utils.RenderPaymentSuccess(c, utils.PaymentPageData{
 			Heading:    "Thanh toán thành công!",
 			Message:    "Vé đã được tạo thành công.",
@@ -140,9 +140,9 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 		})
 	}
 
-	// ✅ Update payment status
+	// Update payment status
 	if err := h.PaymentRepo.UpdateStatus(ctx, orderID, "success"); err != nil {
-		fmt.Printf("❌ Failed to update payment status: %v\n", err)
+		fmt.Printf("Failed to update payment status: %v\n", err)
 		return utils.RenderPaymentError(c, utils.PaymentPageData{
 			Title:      "Lỗi hệ thống",
 			Heading:    "Lỗi hệ thống!",
@@ -151,7 +151,7 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 		})
 	}
 
-	// ✅ Create ticket
+	//  Create ticket
 	ticket := &models.Ticket{
 		UserID:  payment.UserID,
 		EventID: payment.EventID,
@@ -169,16 +169,16 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 		})
 	}
 
-	// ✅ Link ticket to payment
+	//  Link ticket to payment
 	if err := h.PaymentRepo.UpdateTicketID(ctx, orderID, fmt.Sprintf("%d", createdTicket.ID)); err != nil {
-		fmt.Printf("❌ Failed to link ticket: %v\n", err)
+		fmt.Printf("Failed to link ticket: %v\n", err)
 		// Ticket đã tạo thành công, chỉ log warning
-		fmt.Println("⚠️ Ticket created but not linked to payment")
+		fmt.Println("️Ticket created but not linked to payment")
 	}
 
-	fmt.Printf("✅ Payment successful - OrderID: %s, TicketID: %d\n", orderID, createdTicket.ID)
+	fmt.Printf("Payment successful - OrderID: %s, TicketID: %d\n", orderID, createdTicket.ID)
 
-	// ✅ Success page cuối cùng
+	//  Success page cuối cùng
 	return utils.RenderPaymentSuccess(c, utils.PaymentPageData{
 		Heading:    "Thanh toán thành công!",
 		Message:    "Chúc mừng! Vé của bạn đã được tạo thành công.",
@@ -188,7 +188,6 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 	})
 }
 
-// POST /payment/momo-ipn
 // POST /payment/momo-ipn
 func (h *PaymentHandler) HandleMomoIPN(c *fiber.Ctx) error {
 	type MomoIPNBody struct {
@@ -209,14 +208,14 @@ func (h *PaymentHandler) HandleMomoIPN(c *fiber.Ctx) error {
 
 	var body MomoIPNBody
 	if err := c.BodyParser(&body); err != nil {
-		fmt.Println("❌ IPN Body parse error:", err)
-		return c.Status(http.StatusBadRequest).SendString("❌ Dữ liệu không hợp lệ")
+		fmt.Println("IPN Body parse error:", err)
+		return c.Status(http.StatusBadRequest).SendString("Dữ liệu không hợp lệ")
 	}
 
 	fmt.Printf("🔍 IPN Received: OrderID=%s, ResultCode=%d, Signature=%s\n",
 		body.OrderId, body.ResultCode, body.Signature)
 
-	// ✅ Bước 1: Xác thực chữ ký với format IPN
+	// Bước 1: Xác thực chữ ký với format IPN
 	params := map[string]string{
 		"accessKey":    os.Getenv("MOMO_ACCESS_KEY"),
 		"amount":       fmt.Sprintf("%d", body.Amount),
@@ -234,13 +233,13 @@ func (h *PaymentHandler) HandleMomoIPN(c *fiber.Ctx) error {
 	}
 
 	secretKey := os.Getenv("MOMO_SECRET_KEY")
-	generatedSig := utils.GenerateMomoIPNSignature(params, secretKey) // ✅ Dùng hàm IPN
+	generatedSig := utils.GenerateMomoIPNSignature(params, secretKey) 
 
-	fmt.Printf("🔐 Generated signature: %s\n", generatedSig)
-	fmt.Printf("🔐 Received signature:  %s\n", body.Signature)
+	fmt.Printf(" Generated signature: %s\n", generatedSig)
+	fmt.Printf(" Received signature:  %s\n", body.Signature)
 
 	if body.Signature != generatedSig {
-		fmt.Println("❌ Signature verification failed!")
+		fmt.Println(" Signature verification failed!")
 		return c.Status(http.StatusBadRequest).JSON(fiber.Map{
 			"error":     "Chữ ký không hợp lệ",
 			"received":  body.Signature,
@@ -248,55 +247,55 @@ func (h *PaymentHandler) HandleMomoIPN(c *fiber.Ctx) error {
 		})
 	}
 
-	fmt.Println("✅ Signature verified successfully!")
+	fmt.Println("Signature verified successfully!")
 
-	// ✅ Bước 2: Kiểm tra kết quả giao dịch
+	// Bước 2: Kiểm tra kết quả giao dịch
 	if body.ResultCode != 0 {
-		fmt.Printf("❌ Transaction failed with code: %d\n", body.ResultCode)
-		return c.SendString("❌ Giao dịch thất bại hoặc bị hủy")
+		fmt.Printf("Transaction failed with code: %d\n", body.ResultCode)
+		return c.SendString("Giao dịch thất bại hoặc bị hủy")
 	}
 
 	ctx := context.Background()
 
-	// ✅ Bước 3: Kiểm tra đơn thanh toán
+	//  Bước 3: Kiểm tra đơn thanh toán
 	payment, err := h.PaymentRepo.GetByOrderID(ctx, body.OrderId)
 	if err != nil {
-		fmt.Printf("❌ Payment not found: %v\n", err)
-		return c.Status(http.StatusNotFound).SendString("❌ Không tìm thấy đơn thanh toán")
+		fmt.Printf(" Payment not found: %v\n", err)
+		return c.Status(http.StatusNotFound).SendString(" Không tìm thấy đơn thanh toán")
 	}
 
 	if payment.Status == "success" {
-		fmt.Println("✅ Payment already processed")
-		return c.SendString("✅ Đơn đã được xử lý trước đó")
+		fmt.Println("Payment already processed")
+		return c.SendString("Đơn đã được xử lý trước đó")
 	}
 
-	// ✅ Bước 4: Cập nhật đơn thanh toán
+	//  Bước 4: Cập nhật đơn thanh toán
 	err = h.PaymentRepo.UpdateStatus(ctx, body.OrderId, "success")
 	if err != nil {
-		fmt.Printf("❌ Failed to update payment: %v\n", err)
-		return c.Status(http.StatusInternalServerError).SendString("❌ Cập nhật thanh toán lỗi")
+		fmt.Printf(" Failed to update payment: %v\n", err)
+		return c.Status(http.StatusInternalServerError).SendString("Cập nhật thanh toán lỗi")
 	}
 
-	// ✅ Bước 5: Tạo vé
+	// Bước 5: Tạo vé
 	ticket := &models.Ticket{
 		UserID:  payment.UserID,
 		EventID: payment.EventID,
 	}
 	createdTicket, err := h.TicketRepo.CreateOne(ctx, payment.UserID, ticket)
 	if err != nil {
-		fmt.Printf("❌ Failed to create ticket: %v\n", err)
-		return c.Status(http.StatusInternalServerError).SendString("❌ Tạo vé lỗi")
+		fmt.Printf("Failed to create ticket: %v\n", err)
+		return c.Status(http.StatusInternalServerError).SendString("Tạo vé lỗi")
 	}
 
-	// ✅ Bước 6: Gán TicketID vào đơn thanh toán
+	// Bước 6: Gán TicketID vào đơn thanh toán
 	err = h.PaymentRepo.UpdateTicketID(ctx, body.OrderId, fmt.Sprintf("%d", createdTicket.ID))
 	if err != nil {
-		fmt.Printf("❌ Failed to link ticket: %v\n", err)
-		return c.Status(http.StatusInternalServerError).SendString("❌ Gán TicketID lỗi")
+		fmt.Printf(" Failed to link ticket: %v\n", err)
+		return c.Status(http.StatusInternalServerError).SendString(" Gán TicketID lỗi")
 	}
 
-	fmt.Printf("✅ IPN processed successfully - OrderID: %s, TicketID: %d\n", body.OrderId, createdTicket.ID)
-	return c.SendString("✅ Giao dịch thành công, vé đã tạo!")
+	fmt.Printf("IPN processed successfully - OrderID: %s, TicketID: %d\n", body.OrderId, createdTicket.ID)
+	return c.SendString("Giao dịch thành công, vé đã tạo!")
 }
 
 // GET /payment/status/:orderID

@@ -16,10 +16,19 @@ type EventHandler struct {
 }
 
 func (h *EventHandler) GetMany(ctx *fiber.Ctx) error {
+	name := ctx.Query("name")
+
+
 	context, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
 	defer cancel()
-
-	events, err := h.repository.GetMany(context)
+	
+	var events []*models.Event
+	var err error
+	if name != "" {
+		events, err = h.repository.SearchByName(context, name)
+	} else {
+		events, err = h.repository.GetMany(context)
+	}
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{

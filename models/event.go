@@ -27,6 +27,7 @@ type EventRepository interface {
 	CreateOne(ctx context.Context, event *Event) (*Event, error)
 	UpdateOne(ctx context.Context, eventId uint, updateData map[string]interface{}) (*Event, error)
 	DeleteOne(ctx context.Context, eventId uint) error
+	SearchByName(ctx context.Context, name string) ([]*Event, error)
 }
 
 func (e *Event) AfterFind(db *gorm.DB) (err error) {

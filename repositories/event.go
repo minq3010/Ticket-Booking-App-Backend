@@ -25,6 +25,14 @@ func (r *EventRepository) GetMany(ctx context.Context) ([]*models.Event, error) 
 	return events, nil
 }
 
+func (r *EventRepository) SearchByName(ctx context.Context, name string) ([]*models.Event, error) {
+	var events []*models.Event
+
+	err := r.db.WithContext(ctx).Where("name ILIKE ?", "%"+name+"%").Find(&events).Error
+
+	return events, err
+}
+
 func (r *EventRepository) GetOne(ctx context.Context, eventId uint) (*models.Event, error) {
 	event := &models.Event{}
 
