@@ -34,10 +34,15 @@ func main() {
 	userRepository := repositories.NewUserRepository(db)
 	authRepository := repositories.NewAuthRepository(db)
 	paymentRepository := repositories.NewPaymentRepository(db)
-		
+	statRepository := repositories.NewStatRepository(db)
+
 	// kiểm tra và xoá sự kiện đã xảy ra > 2 ngày
 	if err := eventRepository.DeleteExpiredEvents(context.Background()); err != nil {
 		log.Printf("Error While Delete Expired Events: %v", err)
+	}
+	// update thống kê
+	if err := statRepository.UpdateAllStats(context.Background()); err != nil {
+		log.Printf("Error While Update Stats: %v", err)
 	}
 	
 	// service
@@ -52,7 +57,6 @@ func main() {
 	handlers.NewEventHandler(privateRoutes.Group("/event"), eventRepository)
 	handlers.NewTicketHandler(privateRoutes.Group("/ticket"), ticketRepository)
 	handlers.NewUserHandler(privateRoutes.Group("/user"), userRepository)
-
 	handlers.NewPaymentHandler(
 		privateRoutes.Group("/payment"),
 		paymentRepository,
@@ -65,14 +69,9 @@ func main() {
 		eventRepository,
 		ticketRepository,
 	)
-	 // ✅ Debug: Log tất cả routes
-    fmt.Println("🔧 Registered routes:")
-    fmt.Println("  POST /api/payment/momo (with auth)")
-    fmt.Println("  GET  /api/payment-callback/momo-return (no auth)")
-    fmt.Println("  POST /api/payment-callback/momo-ipn (no auth)")
 
 	// for manager only
-	server.Get("/stats", middlewares.ManagerOnly(), handlers.GetStatisticsHandler)
+	handlers.NewStatHandler(privateRoutes.Group("/stat/", middlewares.ManagerOnly()), statRepository)
 
 	// port
 	app.Listen(fmt.Sprint(":" + envConfig.DBPort))
