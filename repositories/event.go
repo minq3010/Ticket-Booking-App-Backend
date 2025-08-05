@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/minq3010/Backend-React-Native-App/models"
@@ -102,6 +103,19 @@ func (r *EventRepository) DeleteOne(ctx context.Context, eventId uint) error {
 		return err
 	}
 
+	return nil
+}
+
+func (r *EventRepository) DeleteExpiredEvents(ctx context.Context) error {
+	cutoffTime := time.Now().AddDate(0, 0, -2)
+
+	result := r.db.WithContext(ctx).Where("date < ?", cutoffTime).Delete(&models.Event{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected > 0 {
+		log.Printf("List Expired Events %d", result.RowsAffected)
+	}
 	return nil
 }
 
