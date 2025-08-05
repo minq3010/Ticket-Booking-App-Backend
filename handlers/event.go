@@ -99,6 +99,11 @@ func (h *EventHandler) CreateOne(ctx *fiber.Ctx) error {
 				event.Price = price
 			}
 		}
+		if maxTickets, ok := form.Value["maxTickets"]; ok && len(maxTickets) > 0 {
+			if maxTickets, err := strconv.ParseInt(maxTickets[0], 10, 64); err == nil {
+				event.MaxTickets = maxTickets
+			}
+		}
 		if dates, ok := form.Value["date"]; ok && len(dates) > 0 {
 			if date, err := time.Parse(time.RFC3339, dates[0]); err == nil {
 				event.Date = date
@@ -214,6 +219,9 @@ func (h *EventHandler) UpdateOne(ctx *fiber.Ctx) error {
 		if event.Price != 0 {
 			updateData["price"] = event.Price
 		}
+		if event.MaxTickets != 0 {
+			updateData["max_tickets"] = event.MaxTickets
+		}
 		if event.ImageURL != "" {
 			updateData["image_url"] = event.ImageURL
 		}
@@ -236,6 +244,11 @@ func (h *EventHandler) UpdateOne(ctx *fiber.Ctx) error {
 		if prices, ok := form.Value["price"]; ok && len(prices) > 0 {
 			if price, err := strconv.ParseInt(prices[0], 10, 64); err == nil {
 				updateData["price"] = price
+			}
+		}
+		if maxTickets, ok := form.Value["maxTickets"]; ok && len(maxTickets) > 0 {
+			if maxTickets, err := strconv.ParseInt(maxTickets[0], 10, 64); err == nil {
+				updateData["max_tickets"] = maxTickets
 			}
 		}
 

@@ -14,8 +14,9 @@ type Event struct {
 	TotalTicketsPurchased int64     `json:"totalTicketsPurchased" gorm:"-"`
 	TotalTicketsEntered   int64     `json:"totalTicketsEntered" gorm:"-"`
 	ImageURL              string    `json:"imageUrl"`
-	Description           string    `json:"description"`	
+	Description           string    `json:"description"`
 	Price                 int64     `json:"price" gorm:"default:0"`
+	MaxTickets            int64     `json:"maxTickets"`
 	Date                  time.Time `json:"date"`
 	CreatedAt             time.Time `json:"createdAt"`
 	UpdatedAt             time.Time `json:"updatedAt"`
@@ -28,6 +29,7 @@ type EventRepository interface {
 	UpdateOne(ctx context.Context, eventId uint, updateData map[string]interface{}) (*Event, error)
 	DeleteOne(ctx context.Context, eventId uint) error
 	SearchByName(ctx context.Context, name string) ([]*Event, error)
+	DeleteExpiredEvents(ctx context.Context) error
 }
 
 func (e *Event) AfterFind(db *gorm.DB) (err error) {
