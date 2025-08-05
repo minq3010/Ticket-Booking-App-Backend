@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"errors"
 
 	"github.com/minq3010/Backend-React-Native-App/models"
 	"gorm.io/gorm"
@@ -59,6 +60,21 @@ func (r *TicketRepository) UpdateOne(ctx context.Context, userId uint, ticketId 
 	return r.GetOne(ctx, userId, ticketId)
 }
 
+func (r *TicketRepository) DeleteOne(ctx context.Context, ticketId uint) error {
+	var ticket models.Ticket
+
+	if err := r.db.Where("id = ?", ticketId).First(&ticket).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("ticket not found")
+		}
+		return err
+	}
+
+	if err := r.db.Delete(&ticket).Error; err != nil {
+		return err
+	}
+	return nil
+}
 func NewTicketRepository(db *gorm.DB) models.TicketRepository {
 	return &TicketRepository {
 		db: db,

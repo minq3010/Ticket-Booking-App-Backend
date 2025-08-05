@@ -141,6 +141,24 @@ func (h *TicketHandler) ValidateOne(ctx *fiber.Ctx) error {
 	})	
 }
 
+func (h *TicketHandler) DeleteOne(ctx *fiber.Ctx) error {
+	ticketId, _ := strconv.Atoi(ctx.Params("ticketId"))
+
+	context, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
+	defer cancel()
+
+	err := h.repository.DeleteOne(context, uint(ticketId))
+
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"status":  "fail",
+			"message": err.Error(),
+		})
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
 
 func NewTicketHandler(router fiber.Router, repository models.TicketRepository) {
 	handler := &TicketHandler{
@@ -151,4 +169,5 @@ func NewTicketHandler(router fiber.Router, repository models.TicketRepository) {
 	router.Post("/", handler.CreateOne)
 	router.Get("/:ticketId", handler.GetOne)
 	router.Post("/validate", handler.ValidateOne)
+	router.Delete("/:ticketId", handler.DeleteOne)
 }
