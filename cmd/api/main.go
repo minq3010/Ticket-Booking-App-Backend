@@ -54,8 +54,8 @@ func main() {
 	privateRoutes := server.Use(middlewares.AuthProtected(db))
 
 	// handler
-	handlers.NewEventHandler(privateRoutes.Group("/event"), eventRepository)
-	handlers.NewTicketHandler(privateRoutes.Group("/ticket"), ticketRepository)
+	handlers.NewEventHandler(privateRoutes.Group("/event"), eventRepository, statRepository)
+	handlers.NewTicketHandler(privateRoutes.Group("/ticket"), ticketRepository, statRepository)
 	handlers.NewUserHandler(privateRoutes.Group("/user"), userRepository)
 	handlers.NewPaymentHandler(
 		privateRoutes.Group("/payment"),
@@ -68,6 +68,7 @@ func main() {
 		paymentRepository,
 		eventRepository,
 		ticketRepository,
+		statRepository,
 	)
 
 	// for manager only

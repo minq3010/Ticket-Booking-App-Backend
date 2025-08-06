@@ -13,6 +13,7 @@ import (
 
 type EventHandler struct {
 	repository models.EventRepository
+	statRepo 	models.StatRepository
 }
 
 func (h *EventHandler) GetMany(ctx *fiber.Ctx) error {
@@ -176,6 +177,8 @@ func (h *EventHandler) CreateOne(ctx *fiber.Ctx) error {
 		})
 	}
 
+	go h.statRepo.UpdateStat(ctx.Context(), event.ID)
+
 	return ctx.Status(fiber.StatusCreated).JSON(&fiber.Map{
 		"status":  "success",
 		"message": "Event created",
@@ -337,9 +340,10 @@ func (h *EventHandler) DeleteOne(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
-func NewEventHandler(router fiber.Router, repository models.EventRepository) {
+func NewEventHandler(router fiber.Router, eventRepo models.EventRepository, statRepo models.StatRepository) {
 	handler := &EventHandler{
-		repository: repository,
+		repository: eventRepo,
+		statRepo: statRepo,
 	}
 
 	router.Post("/", handler.CreateOne)

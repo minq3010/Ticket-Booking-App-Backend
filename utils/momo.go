@@ -13,50 +13,50 @@ import (
 )
 
 type MomoPaymentRequest struct {
-	PartnerCode  string `json:"partnerCode"`
-	AccessKey    string `json:"accessKey"`
-	RequestID    string `json:"requestId"`
-	Amount       string `json:"amount"`
-	OrderID      string `json:"orderId"`
-	OrderInfo    string `json:"orderInfo"`
-	RedirectUrl  string `json:"redirectUrl"`
-	IpnUrl       string `json:"ipnUrl"`
-	ExtraData    string `json:"extraData"`
-	RequestType  string `json:"requestType"`
-	Signature    string `json:"signature"`
-	Lang         string `json:"lang"`
-	AutoCapture  bool   `json:"autoCapture"`
+	PartnerCode string `json:"partnerCode"`
+	AccessKey   string `json:"accessKey"`
+	RequestID   string `json:"requestId"`
+	Amount      string `json:"amount"`
+	OrderID     string `json:"orderId"`
+	OrderInfo   string `json:"orderInfo"`
+	RedirectUrl string `json:"redirectUrl"`
+	IpnUrl      string `json:"ipnUrl"`
+	ExtraData   string `json:"extraData"`
+	RequestType string `json:"requestType"`
+	Signature   string `json:"signature"`
+	Lang        string `json:"lang"`
+	AutoCapture bool   `json:"autoCapture"`
 }
 
 type MomoPaymentResponse struct {
-	PayUrl string `json:"payUrl"`
-	ErrorCode int `json:"errorCode"`
-	Message string `json:"message"`
+	PayUrl    string `json:"payUrl"`
+	ErrorCode int    `json:"errorCode"`
+	Message   string `json:"message"`
 }
 
 func GenerateMomoIPNSignature(params map[string]string, secretKey string) string {
-    // IPN signature format khác với create payment
-    raw := fmt.Sprintf(
-        "accessKey=%s&amount=%s&extraData=%s&message=%s&orderId=%s&orderInfo=%s&orderType=%s&partnerCode=%s&payType=%s&requestId=%s&responseTime=%s&resultCode=%s&transId=%s",
-        params["accessKey"],
-        params["amount"],
-        params["extraData"],
-        params["message"],
-        params["orderId"],
-        params["orderInfo"],
-        params["orderType"],
-        params["partnerCode"],
-        params["payType"],
-        params["requestId"],
-        params["responseTime"],
-        params["resultCode"],
-        params["transId"],
-    )
+	// IPN signature format khác với create payment
+	raw := fmt.Sprintf(
+		"accessKey=%s&amount=%s&extraData=%s&message=%s&orderId=%s&orderInfo=%s&orderType=%s&partnerCode=%s&payType=%s&requestId=%s&responseTime=%s&resultCode=%s&transId=%s",
+		params["accessKey"],
+		params["amount"],
+		params["extraData"],
+		params["message"],
+		params["orderId"],
+		params["orderInfo"],
+		params["orderType"],
+		params["partnerCode"],
+		params["payType"],
+		params["requestId"],
+		params["responseTime"],
+		params["resultCode"],
+		params["transId"],
+	)
 
-    h := hmac.New(sha256.New, []byte(secretKey))
-    h.Write([]byte(raw))
-    fmt.Println("🔐 IPN Raw signature string:", raw)
-    return hex.EncodeToString(h.Sum(nil))
+	h := hmac.New(sha256.New, []byte(secretKey))
+	h.Write([]byte(raw))
+	fmt.Println("🔐 IPN Raw signature string:", raw)
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func GenerateMomoSignature(params map[string]string, secretKey string) string {
@@ -86,52 +86,65 @@ func CreateMomoPayment(orderID string, amount int) (*MomoPaymentResponse, error)
 	accessKey := os.Getenv("MOMO_ACCESS_KEY")
 	secretKey := os.Getenv("MOMO_SECRET_KEY")
 	partnerCode := os.Getenv("MOMO_PARTNER_CODE")
-	redirectURL := os.Getenv("MOMO_REDIRECT_URL")
-	ipnURL := os.Getenv("MOMO_IPN_URL")
+	ngrokURL := os.Getenv("NGROK_URL")
+    redirectURL := fmt.Sprintf("%s/api/payment-callback/momo-return", ngrokURL)
+    ipnURL := fmt.Sprintf("%s/api/payment-callback/momo-ipn", ngrokURL)
+
+	// ✅ Debug env variables
+	fmt.Printf("🔧 MoMo Config Check:\n")
+	fmt.Printf("  MOMO_IPN_URL: %s\n", ipnURL)
+	fmt.Printf("  MOMO_REDIRECT_URL: %s\n", redirectURL)
+
 	orderInfo := "Thanh toán đơn hàng " + orderID
 	requestID := fmt.Sprintf("%s-%d", orderID, time.Now().Unix())
 	extraData := ""
 	requestType := "captureWallet"
 
 	params := map[string]string{
-		"accessKey": accessKey,
-		"amount": fmt.Sprintf("%d", amount),
-		"extraData": extraData,
-		"ipnUrl": ipnURL,
-		"orderId": orderID,
-		"orderInfo": orderInfo,
+		"accessKey":   accessKey,
+		"amount":      fmt.Sprintf("%d", amount),
+		"extraData":   extraData,
+		"ipnUrl":      ipnURL,
+		"orderId":     orderID,
+		"orderInfo":   orderInfo,
 		"partnerCode": partnerCode,
 		"redirectUrl": redirectURL,
-		"requestId": requestID,
+		"requestId":   requestID,
 		"requestType": requestType,
 	}
 
 	signature := GenerateMomoSignature(params, secretKey)
-	// log Signature
-	fmt.Println("Signature: ",signature)
+	fmt.Printf("🔐 Signature: %s\n", signature)
+
 	payload := MomoPaymentRequest{
 		PartnerCode: partnerCode,
-		AccessKey: accessKey,
-		RequestID: requestID,
-		Amount: fmt.Sprintf("%d", amount),
-		OrderID: orderID,
-		OrderInfo: orderInfo,
+		AccessKey:   accessKey,
+		RequestID:   requestID,
+		Amount:      fmt.Sprintf("%d", amount),
+		OrderID:     orderID,
+		OrderInfo:   orderInfo,
 		RedirectUrl: redirectURL,
-		IpnUrl: ipnURL,
-		ExtraData: extraData,
+		IpnUrl:      ipnURL, // ✅ Đảm bảo có IPN URL
+		ExtraData:   extraData,
 		RequestType: requestType,
-		Signature: signature,
-		Lang: "vi",
+		Signature:   signature,
+		Lang:        "vi",
 		AutoCapture: true,
 	}
-	 // ✅ Debug payload trước khi gửi
-    fmt.Printf("🚀 MoMo Payload:\n")
-    fmt.Printf("  OrderID: %s\n", payload.OrderID)
-    fmt.Printf("  OrderInfo: %s\n", payload.OrderInfo)
-    fmt.Printf("  RedirectUrl: %s\n", payload.RedirectUrl)
-    fmt.Printf("  Amount: %s\n", payload.Amount)
+
+	// ✅ Debug payload đúng cách
+	fmt.Printf("🚀 MoMo Payload:\n")
+	fmt.Printf("  OrderID: %s\n", payload.OrderID)
+	fmt.Printf("  OrderInfo: %s\n", payload.OrderInfo)
+	fmt.Printf("  RedirectUrl: %s\n", payload.RedirectUrl)
+	fmt.Printf("  IpnUrl: %s\n", payload.IpnUrl) // ✅ Sửa lại
+	fmt.Printf("  Amount: %s\n", payload.Amount)
 
 	jsonPayload, _ := json.Marshal(payload)
+
+	// ✅ Debug raw JSON để kiểm tra
+	fmt.Printf("📦 Raw JSON Payload: %s\n", string(jsonPayload))
+
 	resp, err := http.Post(endpoint, "application/json", bytes.NewBuffer(jsonPayload))
 	if err != nil {
 		return nil, err
@@ -140,6 +153,13 @@ func CreateMomoPayment(orderID string, amount int) (*MomoPaymentResponse, error)
 
 	var momoResp MomoPaymentResponse
 	err = json.NewDecoder(resp.Body).Decode(&momoResp)
+
+	// ✅ Debug MoMo response
+	fmt.Printf("📬 MoMo Response:\n")
+	fmt.Printf("  ErrorCode: %d\n", momoResp.ErrorCode)
+	fmt.Printf("  Message: %s\n", momoResp.Message)
+	fmt.Printf("  PayUrl: %s\n", momoResp.PayUrl)
+
 	return &momoResp, err
 }
 

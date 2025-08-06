@@ -13,6 +13,7 @@ import (
 
 type TicketHandler struct {
 	repository models.TicketRepository
+	statRepo 	models.StatRepository
 }
 
 func (h *TicketHandler) GetMany(ctx *fiber.Ctx) error {
@@ -101,6 +102,7 @@ func (h *TicketHandler) CreateOne(ctx *fiber.Ctx) error {
 		})
 	}
 
+
 	return ctx.Status(fiber.StatusCreated).JSON(&fiber.Map{
 		"status":  "success",
 		"message": "",
@@ -133,6 +135,8 @@ func (h *TicketHandler) ValidateOne(ctx *fiber.Ctx) error {
 			"message": err.Error(),
 		})
 	}
+	
+	go h.statRepo.UpdateStat(ctx.Context(), ticket.EventID)
 
 	return ctx.Status(fiber.StatusOK).JSON(&fiber.Map{
 		"status":  "success",
@@ -143,11 +147,20 @@ func (h *TicketHandler) ValidateOne(ctx *fiber.Ctx) error {
 
 func (h *TicketHandler) DeleteOne(ctx *fiber.Ctx) error {
 	ticketId, _ := strconv.Atoi(ctx.Params("ticketId"))
+	userId := uint(ctx.Locals("userId").(float64))
 
 	context, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
 	defer cancel()
 
-	err := h.repository.DeleteOne(context, uint(ticketId))
+	ticket, err := h.repository.GetOne(context, userId, uint(ticketId))
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+			"status": "fail",
+			"message": "Ticket not found",
+		})
+	}
+
+	err = h.repository.DeleteOne(context, uint(ticketId))
 
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -156,13 +169,15 @@ func (h *TicketHandler) DeleteOne(ctx *fiber.Ctx) error {
 		})
 	}
 
+	go h.statRepo.UpdateStat(ctx.Context(), ticket.EventID)
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
 
-func NewTicketHandler(router fiber.Router, repository models.TicketRepository) {
+func NewTicketHandler(router fiber.Router, ticketRepo models.TicketRepository, statRepo models.StatRepository) {
 	handler := &TicketHandler{
-		repository: repository,
+		repository: ticketRepo,
+		statRepo: statRepo,
 	}
 
 	router.Get("/", handler.GetMany)

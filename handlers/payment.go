@@ -15,6 +15,7 @@ type PaymentHandler struct {
 	PaymentRepo models.PaymentRepository
 	EventRepo   models.EventRepository
 	TicketRepo  models.TicketRepository
+	StatRepo 	models.StatRepository
 }
 
 //  POST /payment/momo
@@ -169,6 +170,8 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 		})
 	}
 
+	go h.StatRepo.UpdateStat(c.Context(), ticket.EventID) 
+
 	//  Link ticket to payment
 	if err := h.PaymentRepo.UpdateTicketID(ctx, orderID, fmt.Sprintf("%d", createdTicket.ID)); err != nil {
 		fmt.Printf("Failed to link ticket: %v\n", err)
@@ -190,6 +193,7 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 
 // POST /payment/momo-ipn
 func (h *PaymentHandler) HandleMomoIPN(c *fiber.Ctx) error {
+	fmt.Println("🔔 IPN CALLED - MoMo is sending IPN callback")
 	type MomoIPNBody struct {
 		PartnerCode  string `json:"partnerCode"`
 		OrderId      string `json:"orderId"`
@@ -287,6 +291,8 @@ func (h *PaymentHandler) HandleMomoIPN(c *fiber.Ctx) error {
 		return c.Status(http.StatusInternalServerError).SendString("Tạo vé lỗi")
 	}
 
+	go h.StatRepo.UpdateStat(c.Context(), ticket.EventID)
+
 	// Bước 6: Gán TicketID vào đơn thanh toán
 	err = h.PaymentRepo.UpdateTicketID(ctx, body.OrderId, fmt.Sprintf("%d", createdTicket.ID))
 	if err != nil {
@@ -333,11 +339,12 @@ func NewPaymentHandler(router fiber.Router, pRepo models.PaymentRepository, eRep
 	router.Get("/status/:orderID", handler.GetPaymentStatus)
 }
 
-func NewPaymentCallbackHandler(router fiber.Router, pRepo models.PaymentRepository, eRepo models.EventRepository, tRepo models.TicketRepository) {
+func NewPaymentCallbackHandler(router fiber.Router, pRepo models.PaymentRepository, eRepo models.EventRepository, tRepo models.TicketRepository, statRepo models.StatRepository) {
 	handler := &PaymentHandler{
 		PaymentRepo: pRepo,
 		EventRepo:   eRepo,
 		TicketRepo:  tRepo,
+		StatRepo: statRepo,
 	}
 	// GET/POST routes KHÔNG cần authentication
 	router.Get("/momo-return", handler.HandleMomoReturn)

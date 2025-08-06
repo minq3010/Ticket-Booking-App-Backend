@@ -77,11 +77,9 @@ func (r *StatRepository) UpdateStat(ctx context.Context, eventId uint) error {
 		return err
 	}
 
-	statDate := time.Now().Truncate(24 * time.Hour)
-
 	var stats models.Stats
 	err := r.db.WithContext(ctx).
-		Where("event_id = ? AND stat_date = ?", eventId, statDate).
+		Where("event_id = ?", eventId).
 		First(&stats).Error
 
 	stats.EventID = eventId
@@ -89,17 +87,16 @@ func (r *StatRepository) UpdateStat(ctx context.Context, eventId uint) error {
 	stats.TotalTicketsEntered = totalEntered
 	stats.TotalTicketsDeleted = totalDeleted
 	stats.Revenue = revenue
-	stats.StatDate = statDate
+	stats.UpdatedAt = time.Now()
 
 	switch err {
 	case nil:
-		fmt.Printf("Updating stats for event %d on %v\n", eventId, statDate)
+		// Đã có, update
 		return r.db.WithContext(ctx).Save(&stats).Error
 	case gorm.ErrRecordNotFound:
-		fmt.Printf("Creating new stats for event %d on %v\n", eventId, statDate)
+		// Chưa có, tạo mới
 		return r.db.WithContext(ctx).Create(&stats).Error
 	default:
-		fmt.Printf("Error finding stats for event %d on %v: %v\n", eventId, statDate, err)
 		return err
 	}
 }
@@ -124,6 +121,7 @@ func NewStatRepository(db *gorm.DB) models.StatRepository {
 		db: db,
 	}
 }
+
 // func GetStatistics(db *gorm.DB) (Statistics, error) {
 //     var stats Statistics
 
