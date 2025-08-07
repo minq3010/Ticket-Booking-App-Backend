@@ -1,6 +1,5 @@
 # Bỏ qua các file hệ thống macOS
 .DS_Store
-.vscode
 # Bỏ thư mục build hoặc output
 build/
 dist/
@@ -13,17 +12,11 @@ node_modules/
 post_cmd.txt
 pre_cmd.txt
 tmp
-#config
-.env
-.air.toml
 
 # Bỏ qua các file cấu hình của IDE
 *.vscode/   
 
-go.mod
-go.sum
 
-Backend-React-Native-App
 # Bỏ qua các file nhị phân
 *.apk
 *.ipa
