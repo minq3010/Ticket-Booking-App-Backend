@@ -1,23 +1,32 @@
-# Bỏ qua các file hệ thống macOS
+# macOS system files
 .DS_Store
-# Bỏ thư mục build hoặc output
+
+# Build and output folders
 build/
 dist/
 *.log
 
-# Node.js
+# Node.js dependencies
 node_modules/
 
-# Air
+# Air tool files
 post_cmd.txt
 pre_cmd.txt
-tmp
 
-# Bỏ qua các file cấu hình của IDE
-*.vscode/   
+# IDE configuration files
+.vscode/
 
+# Environment files
+.env
 
-# Bỏ qua các file nhị phân
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+
+# Binary files
 *.apk
 *.ipa
 *.exe
