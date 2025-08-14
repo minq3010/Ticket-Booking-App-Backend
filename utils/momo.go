@@ -89,8 +89,6 @@ func CreateMomoPayment(orderID string, amount int) (*MomoPaymentResponse, error)
 	ngrokURL := os.Getenv("NGROK_URL")
     redirectURL := fmt.Sprintf("%s/api/payment-callback/momo-return", ngrokURL)
     ipnURL := fmt.Sprintf("%s/api/payment-callback/momo-ipn", ngrokURL)
-	// Option: Use localhost instead of ngrok for testing
-	// Set USE_LOCALHOST=true in your environment to enable
 	useLocalhost := os.Getenv("USE_LOCALHOST")
 	if useLocalhost == "true" {
 		redirectURL = "http://localhost:26367/api/payment-callback/momo-return"

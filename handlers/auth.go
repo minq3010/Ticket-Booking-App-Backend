@@ -25,19 +25,18 @@ func (h *AuthHandler) Login(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&creds); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"status":  "fail",
-			"message": err.Error(),
+			"message": "There are something wrong",
 		})
 	}
 
 	if err := validate.Struct(creds); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"status":  "fail",
-			"message": err.Error(),
+			"message": "please, enter your email and password",
 		})
 	}
 
 	token, user, err := h.service.Login(context, creds)
-
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"status":  "fail",
@@ -76,7 +75,6 @@ func (h *AuthHandler) Register(ctx *fiber.Ctx) error {
 	}
 
 	token, user, err := h.service.Register(context, creds)
-
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
 			"status":  "fail",
@@ -102,3 +100,4 @@ func NewAuthHandler(router fiber.Router, service models.AuthService) {
 	router.Post("/login", handler.Login)
 	router.Post("/register", handler.Register)
 }
+
