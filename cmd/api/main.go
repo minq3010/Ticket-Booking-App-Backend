@@ -56,7 +56,6 @@ func main() {
 	// handler
 	handlers.NewEventHandler(privateRoutes.Group("/event"), eventRepository, statRepository)
 	handlers.NewTicketHandler(privateRoutes.Group("/ticket"), ticketRepository, statRepository)
-	handlers.NewUserHandler(privateRoutes.Group("/user"), userRepository)
 	handlers.NewPaymentHandler(
 		privateRoutes.Group("/payment"),
 		paymentRepository,
@@ -64,15 +63,16 @@ func main() {
 		ticketRepository,
 	)
 	handlers.NewPaymentCallbackHandler(
-		server.Group("/payment-callback"), // Không qua privateRoutes
+		server.Group("/payment-callback"), 
 		paymentRepository,
 		eventRepository,
 		ticketRepository,
 		statRepository,
 	)
-
+	// for users	
+	handlers.NewUserHandler(privateRoutes.Group("/user"), userRepository)
 	// for manager only
-	handlers.NewStatHandler(privateRoutes.Group("/stat/", middlewares.ManagerOnly()), statRepository)
+	handlers.NewStatHandler(privateRoutes.Group("/manager/stat", middlewares.ManagerOnly()), statRepository)
 
 	// port
 	app.Listen(fmt.Sprint(":" + envConfig.DBPort))

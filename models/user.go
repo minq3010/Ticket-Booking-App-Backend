@@ -21,7 +21,7 @@ type User struct {
 	Avatar    string    `json:"avatar"`
 	Name      string    `json:"name"`
 	Phone     string    `json:"phone"`
-	Password  string    `json:"-"` 
+	Password  string    `json:"password"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
 }
@@ -33,6 +33,9 @@ type UserRepository interface {
 		userId uint,
 		updateData map[string]interface{},
 	) (*User, error)
+	SearchUserAccountByEmail(ctx context.Context, email string) ([]*User, error)
+	GetAllUsers(ctx context.Context) ([]*User, error)
+	DeleteUser(ctx context.Context, userId uint) error  
 }
 
 func (u *User) AfterCreate(db *gorm.DB) (err error) {

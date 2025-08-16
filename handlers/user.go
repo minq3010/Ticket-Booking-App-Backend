@@ -33,9 +33,37 @@ func (h *UserHandler) GetUserInfo(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(&fiber.Map{
 		"status":  "success",
-		"message": "this if your information",
+		"message": "this is your information",
 		"data":    user,
 	})
+}
+
+func (h *UserHandler) GetAllUsers(ctx *fiber.Ctx) error {
+    email := ctx.Query("email")
+
+    context, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    var users []*models.User
+    var err error
+
+    if email != "" {
+        users, err = h.repository.SearchUserAccountByEmail(context, email)
+    } else {
+        users, err = h.repository.GetAllUsers(context)
+    }
+    
+    if err != nil {
+        return ctx.Status(fiber.StatusInternalServerError).JSON(&fiber.Map{
+            "status": "fail",
+            "message": err.Error(),
+        })
+    }
+
+    return ctx.Status(fiber.StatusOK).JSON(&fiber.Map{
+        "status": "success",
+        "data": users,
+    })
 }
 
 func (h *UserHandler) UpdateUserInfo(ctx *fiber.Ctx) error {
@@ -109,6 +137,26 @@ func (h *UserHandler) UpdateUserInfo(ctx *fiber.Ctx) error {
     })
 }
 
+func (h *UserHandler) DeleteUser(ctx *fiber.Ctx) error {
+    userId, _ := strconv.Atoi(ctx.Params("userId"))
+    context, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    err := h.repository.DeleteUser(context, uint(userId))
+
+    if err != nil {
+        return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+            "status": "fail",
+            "message": err.Error,
+        })
+    }
+
+    return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+        "status": "success",
+        "message": "User deleted",
+    })
+}
+
 func NewUserHandler(router fiber.Router, repository models.UserRepository) {
 	handler := &UserHandler{
 		repository: repository,
@@ -116,4 +164,6 @@ func NewUserHandler(router fiber.Router, repository models.UserRepository) {
 
 	router.Get("/:userId", middlewares.UserSelfOnly(), handler.GetUserInfo)
 	router.Put("/:userId", middlewares.UserSelfOnly(), handler.UpdateUserInfo)
+    router.Get("/", middlewares.ManagerOnly(), handler.GetAllUsers)
+    router.Delete("/:userId", middlewares.UserSelfOnly(), handler.DeleteUser)
 }
