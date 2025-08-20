@@ -22,16 +22,18 @@ go mod tidy
 ```
 ### 5. Đã có sẵn file môi trường
 
-- Không cần tạo lại file `.env`, chỉ cần kiểm tra và cập nhật các biến nếu cần.
+- Cần tạo lại file `.env` (Liên hệ)
 
 ### 6. Chạy dự án bằng Makefile (Docker)
 ```bash
-make start
+make run 
 ```
 ### 7. Dừng dự án
 ```bash
 make stop
+Ctrl C
 ```
+
 ### 8. Pull code mới nhất từ remote
 ```bash
 git pull origin main
