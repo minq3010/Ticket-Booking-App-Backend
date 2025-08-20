@@ -73,7 +73,6 @@ func (h *UserHandler) UpdateUserInfo(ctx *fiber.Ctx) error {
     context, cancel := context.WithTimeout(context.Background(), time.Duration(5*time.Second))
     defer cancel()
 
-    // Lấy form-data
     form, err := ctx.MultipartForm()
     if err != nil {
         return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
@@ -83,7 +82,6 @@ func (h *UserHandler) UpdateUserInfo(ctx *fiber.Ctx) error {
         })
     }
 
-    // Lấy các trường text
     if names, ok := form.Value["name"]; ok && len(names) > 0 {
         updateData["name"] = names[0]
     }
@@ -91,7 +89,6 @@ func (h *UserHandler) UpdateUserInfo(ctx *fiber.Ctx) error {
         updateData["phone"] = phones[0]
     }
 
-    // Lấy file avatar
     if files, ok := form.File["avatar"]; ok && len(files) > 0 {
         file := files[0]
         if err := os.MkdirAll("./tmp", os.ModePerm); err != nil {
@@ -162,8 +159,8 @@ func NewUserHandler(router fiber.Router, repository models.UserRepository) {
 		repository: repository,
 	}
 
-	router.Get("/:userId", middlewares.UserSelfOnly(), handler.GetUserInfo)
-	router.Put("/:userId", middlewares.UserSelfOnly(), handler.UpdateUserInfo)
+	router.Get("/:userId", middlewares.UserSelfOrManagerOnly(), handler.GetUserInfo)
+	router.Put("/:userId", middlewares.UserSelfOrManagerOnly(), handler.UpdateUserInfo)
     router.Get("/", middlewares.ManagerOnly(), handler.GetAllUsers)
-    router.Delete("/:userId", middlewares.UserSelfOnly(), handler.DeleteUser)
+    router.Delete("/:userId", middlewares.ManagerOnly(), handler.DeleteUser)
 }

@@ -84,8 +84,7 @@ func AuthProtected(db *gorm.DB) fiber.Handler {
 
 func ManagerOnly() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		// Lấy userId từ ctx.Locals (đã được set bởi middleware JWT trước đó)
-		userId, ok := ctx.Locals("userId").(float64) // JWT thường trả về số kiểu float64
+		userId, ok := ctx.Locals("userId").(float64)
 		if !ok {
 			return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"status":  "fail",
@@ -93,7 +92,6 @@ func ManagerOnly() fiber.Handler {
 			})
 		}
 
-		// Kiểm tra nếu userId != 1 → Không phải Manager
 		if uint(userId) != 1 {
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"status":  "fail",
@@ -105,7 +103,7 @@ func ManagerOnly() fiber.Handler {
 	}
 }
 
-func UserSelfOnly() fiber.Handler {
+func UserSelfOrManagerOnly() fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		userIdFromToken, ok := ctx.Locals("userId").(float64)
 		if !ok {
@@ -116,10 +114,10 @@ func UserSelfOnly() fiber.Handler {
 		}
 
 		userIdFromParam := ctx.Params("userId")
-		if userIdFromParam != fmt.Sprintf("%.0f", userIdFromToken) {
+		if userIdFromParam != fmt.Sprintf("%.0f", userIdFromToken) && uint(userIdFromToken) != 1 {
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"status":  "fail",
-				"message": "Access denied: You can only access your own info",
+				"message": "Access denied: You can only access your own info or you must be the Manager",
 			})
 		}
 		return ctx.Next()

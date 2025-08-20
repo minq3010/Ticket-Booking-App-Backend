@@ -77,12 +77,10 @@ func (r *EventRepository) UpdateOne(ctx context.Context, eventId uint, updateDat
 func (r *EventRepository) DeleteOne(ctx context.Context, eventId uint) error {
 	var event models.Event
 
-	// Bước 1: Lấy thời gian tạo của sự kiện
 	if err := r.db.Select("created_at").First(&event, eventId).Error; err != nil {
 		return err
 	}
 
-	// Bước 2: Kiểm tra có vé đã entered chưa
 	var count int64
 	if err := r.db.Model(&models.Ticket{}).
 		Where("event_id = ? AND entered = true", eventId).
@@ -90,15 +88,12 @@ func (r *EventRepository) DeleteOne(ctx context.Context, eventId uint) error {
 		return err
 	}
 
-	// Bước 3: Logic quyết định xoá
 	if count > 0 {
-		// Có người đã entered → chỉ xoá nếu đã qua 1 ngày
 		if time.Since(event.CreatedAt) < 24*time.Hour {
 			return errors.New("cannot delete event within 1 day if tickets have already been confirmed")
 		}
 	}
 
-	// Xoá sự kiện
 	if err := r.db.Delete(&models.Event{}, eventId).Error; err != nil {
 		return err
 	}

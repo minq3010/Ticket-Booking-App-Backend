@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/minq3010/Backend-React-Native-App/middlewares"
 	"github.com/minq3010/Backend-React-Native-App/models"
 	"github.com/skip2/go-qrcode"
 )
@@ -36,6 +37,34 @@ func (h *TicketHandler) GetMany(ctx *fiber.Ctx) error {
 		"message": "",
 		"data":    tickets,
 	})
+}
+
+func (h *TicketHandler) GetTicketsByUser(ctx *fiber.Ctx) error {
+    context, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    userIdParam := ctx.Params("userId")
+    userId, err := strconv.Atoi(userIdParam)
+    if err != nil {
+        return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+            "status": "fail",
+            "message": "Invalid userId",
+        })
+    }
+
+    tickets, err := h.repository.GetMany(context, uint(userId))
+    if err != nil {
+        return ctx.Status(fiber.StatusBadRequest).JSON(&fiber.Map{
+            "status": "fail",
+            "message": err.Error(),
+        })
+    }
+
+    return ctx.Status(fiber.StatusOK).JSON(&fiber.Map{
+        "status": "success",
+        "message": "",
+        "data": tickets,
+    })
 }
 
 func (h *TicketHandler) GetOne(ctx *fiber.Ctx) error {
@@ -185,4 +214,7 @@ func NewTicketHandler(router fiber.Router, ticketRepo models.TicketRepository, s
 	router.Get("/:ticketId", handler.GetOne)
 	router.Post("/validate", handler.ValidateOne)
 	router.Delete("/:ticketId", handler.DeleteOne)
+
+	// for manager
+	router.Get("user/:userId", middlewares.ManagerOnly(), handler.GetTicketsByUser)
 }
