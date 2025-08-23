@@ -15,10 +15,10 @@ type PaymentHandler struct {
 	PaymentRepo models.PaymentRepository
 	EventRepo   models.EventRepository
 	TicketRepo  models.TicketRepository
-	StatRepo 	models.StatRepository
+	StatRepo    models.StatRepository
 }
 
-//  POST /payment/momo
+// POST /payment/momo
 func (h *PaymentHandler) CreateMomoCheckout(c *fiber.Ctx) error {
 	type Body struct {
 		EventID uint `json:"eventId"`
@@ -73,7 +73,7 @@ func (h *PaymentHandler) CreateMomoCheckout(c *fiber.Ctx) error {
 	})
 }
 
-//  GET /payment/momo-return
+// GET /payment/momo-return
 func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 	//  Debug tất cả query parameters
 	fmt.Printf("🔍 All query params: %+v\n", c.Queries())
@@ -170,7 +170,7 @@ func (h *PaymentHandler) HandleMomoReturn(c *fiber.Ctx) error {
 		})
 	}
 
-	go h.StatRepo.UpdateStat(c.Context(), ticket.EventID) 
+	go h.StatRepo.UpdateStat(c.Context(), ticket.EventID)
 
 	//  Link ticket to payment
 	if err := h.PaymentRepo.UpdateTicketID(ctx, orderID, fmt.Sprintf("%d", createdTicket.ID)); err != nil {
@@ -237,7 +237,7 @@ func (h *PaymentHandler) HandleMomoIPN(c *fiber.Ctx) error {
 	}
 
 	secretKey := os.Getenv("MOMO_SECRET_KEY")
-	generatedSig := utils.GenerateMomoIPNSignature(params, secretKey) 
+	generatedSig := utils.GenerateMomoIPNSignature(params, secretKey)
 
 	fmt.Printf(" Generated signature: %s\n", generatedSig)
 	fmt.Printf(" Received signature:  %s\n", body.Signature)
@@ -323,14 +323,14 @@ func (h *PaymentHandler) GetPaymentStatus(c *fiber.Ctx) error {
 
 	if payment.Status == "pending" {
 		return c.JSON(fiber.Map{
-			"orderID":  payment.OrderID,
-            "status":   payment.Status,
-            "amount":   payment.Amount,
-            "eventID":  payment.EventID,
-            "method":   payment.Method,
-            "userID":   payment.UserID,
-            "canPay":   true,
-            "message":  "Đơn hàng đang chờ thanh toán. Bạn có thể tiến hành thanh toán.",
+			"orderID": payment.OrderID,
+			"status":  payment.Status,
+			"amount":  payment.Amount,
+			"eventID": payment.EventID,
+			"method":  payment.Method,
+			"userID":  payment.UserID,
+			"canPay":  true,
+			"message": "Đơn hàng đang chờ thanh toán. Bạn có thể tiến hành thanh toán.",
 		})
 	}
 
@@ -341,7 +341,55 @@ func (h *PaymentHandler) GetPaymentStatus(c *fiber.Ctx) error {
 	})
 }
 
+func (h *PaymentHandler) RetryPayment(c *fiber.Ctx) error {
+	orderID := c.Params("orderID")
+	if orderID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "OrderID is required",
+		})
+	}
 
+	userId := uint(c.Locals("userId").(float64))
+	ctx := context.Background()
+
+	// Kiểm tra đơn hàng có tồn tại và thuộc về user không
+	payment, err := h.PaymentRepo.GetByOrderID(ctx, orderID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Payment not found",
+		})
+	}
+
+	// Kiểm tra quyền sở hữu
+	if payment.UserID != userId {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	// Chỉ cho phép thanh toán lại nếu status là pending
+	if payment.Status != "pending" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":  "Đơn hàng này không thể thanh toán lại",
+			"status": payment.Status,
+		})
+	}
+
+	// Tạo URL thanh toán mới với orderID đã có
+	payURL, err := utils.CreateMomoPayment(orderID, payment.Amount)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to generate MoMo payment URL",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status":  "success",
+		"url":     payURL,
+		"orderID": orderID,
+		"message": "Payment URL created successfully",
+	})
+}
 
 func NewPaymentHandler(router fiber.Router, pRepo models.PaymentRepository, eRepo models.EventRepository, tRepo models.TicketRepository) {
 	handler := &PaymentHandler{
@@ -352,6 +400,7 @@ func NewPaymentHandler(router fiber.Router, pRepo models.PaymentRepository, eRep
 	// momo
 	router.Post("/momo", handler.CreateMomoCheckout)
 	router.Get("/status/:orderID", handler.GetPaymentStatus)
+	router.Post("/retry/:orderID", handler.RetryPayment)
 }
 
 func NewPaymentCallbackHandler(router fiber.Router, pRepo models.PaymentRepository, eRepo models.EventRepository, tRepo models.TicketRepository, statRepo models.StatRepository) {
@@ -359,7 +408,7 @@ func NewPaymentCallbackHandler(router fiber.Router, pRepo models.PaymentReposito
 		PaymentRepo: pRepo,
 		EventRepo:   eRepo,
 		TicketRepo:  tRepo,
-		StatRepo: statRepo,
+		StatRepo:    statRepo,
 	}
 	// GET/POST routes KHÔNG cần authentication
 	router.Get("/momo-return", handler.HandleMomoReturn)
