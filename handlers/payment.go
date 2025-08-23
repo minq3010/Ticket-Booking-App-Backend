@@ -58,7 +58,7 @@ func (h *PaymentHandler) CreateMomoCheckout(c *fiber.Ctx) error {
 		})
 	}
 
-	payURL, err := utils.CreateMomoPayment(orderID, payment.Amount) // bạn đã có hàm này
+	payURL, err := utils.CreateMomoPayment(orderID, payment.Amount)
 	if err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to generate MoMo payment URL",
@@ -321,12 +321,27 @@ func (h *PaymentHandler) GetPaymentStatus(c *fiber.Ctx) error {
 		})
 	}
 
+	if payment.Status == "pending" {
+		return c.JSON(fiber.Map{
+			"orderID":  payment.OrderID,
+            "status":   payment.Status,
+            "amount":   payment.Amount,
+            "eventID":  payment.EventID,
+            "method":   payment.Method,
+            "userID":   payment.UserID,
+            "canPay":   true,
+            "message":  "Đơn hàng đang chờ thanh toán. Bạn có thể tiến hành thanh toán.",
+		})
+	}
+
 	return c.JSON(fiber.Map{
 		"orderID": payment.OrderID,
 		"status":  payment.Status,
 		"amount":  payment.Amount,
 	})
 }
+
+
 
 func NewPaymentHandler(router fiber.Router, pRepo models.PaymentRepository, eRepo models.EventRepository, tRepo models.TicketRepository) {
 	handler := &PaymentHandler{
