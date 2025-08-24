@@ -25,7 +25,7 @@ func main() {
 	})
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization, ngrok-skip-browser-warning",
 	}))
 
 	// repositories
@@ -44,7 +44,7 @@ func main() {
 	if err := statRepository.UpdateAllStats(context.Background()); err != nil {
 		log.Printf("Error While Update Stats: %v", err)
 	}
-	
+
 	// service
 	authService := services.NewAuthService(authRepository)
 
@@ -63,13 +63,13 @@ func main() {
 		ticketRepository,
 	)
 	handlers.NewPaymentCallbackHandler(
-		server.Group("/payment-callback"), 
+		server.Group("/payment-callback"),
 		paymentRepository,
 		eventRepository,
 		ticketRepository,
 		statRepository,
 	)
-	// for users	
+	// for users
 	handlers.NewUserHandler(privateRoutes.Group("/user"), userRepository)
 	// for manager only
 	handlers.NewStatHandler(privateRoutes.Group("/manager/stat", middlewares.ManagerOnly()), statRepository)
