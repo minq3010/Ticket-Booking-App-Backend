@@ -86,9 +86,9 @@ func CreateMomoPayment(orderID string, amount int) (*MomoPaymentResponse, error)
 	accessKey := os.Getenv("MOMO_ACCESS_KEY")
 	secretKey := os.Getenv("MOMO_SECRET_KEY")
 	partnerCode := os.Getenv("MOMO_PARTNER_CODE")
-	ngrokURL := os.Getenv("NGROK_URL")
-    redirectURL := fmt.Sprintf("%s/api/payment-callback/momo-return", ngrokURL)
-    ipnURL := fmt.Sprintf("%s/api/payment-callback/momo-ipn", ngrokURL)
+	URL := os.Getenv("URL")
+    redirectURL := fmt.Sprintf("%s/api/payment-callback/momo-return", URL)
+    ipnURL := fmt.Sprintf("%s/api/payment-callback/momo-ipn", URL)
 	useLocalhost := os.Getenv("USE_LOCALHOST")
 	if useLocalhost == "true" {
 		redirectURL = "http://localhost:26367/api/payment-callback/momo-return"
@@ -129,7 +129,7 @@ func CreateMomoPayment(orderID string, amount int) (*MomoPaymentResponse, error)
 		OrderID:     orderID,
 		OrderInfo:   orderInfo,
 		RedirectUrl: redirectURL,
-		IpnUrl:      ipnURL, // ✅ Đảm bảo có IPN URL
+		IpnUrl:      ipnURL, 
 		ExtraData:   extraData,
 		RequestType: requestType,
 		Signature:   signature,
@@ -137,18 +137,8 @@ func CreateMomoPayment(orderID string, amount int) (*MomoPaymentResponse, error)
 		AutoCapture: true,
 	}
 
-	// ✅ Debug payload đúng cách
-	fmt.Printf("🚀 MoMo Payload:\n")
-	fmt.Printf("  OrderID: %s\n", payload.OrderID)
-	fmt.Printf("  OrderInfo: %s\n", payload.OrderInfo)
-	fmt.Printf("  RedirectUrl: %s\n", payload.RedirectUrl)
-	fmt.Printf("  IpnUrl: %s\n", payload.IpnUrl) // ✅ Sửa lại
-	fmt.Printf("  Amount: %s\n", payload.Amount)
 
 	jsonPayload, _ := json.Marshal(payload)
-
-	// ✅ Debug raw JSON để kiểm tra
-	fmt.Printf("📦 Raw JSON Payload: %s\n", string(jsonPayload))
 
 	resp, err := http.Post(endpoint, "application/json", bytes.NewBuffer(jsonPayload))
 	if err != nil {
@@ -158,12 +148,6 @@ func CreateMomoPayment(orderID string, amount int) (*MomoPaymentResponse, error)
 
 	var momoResp MomoPaymentResponse
 	err = json.NewDecoder(resp.Body).Decode(&momoResp)
-
-	// ✅ Debug MoMo response
-	fmt.Printf("📬 MoMo Response:\n")
-	fmt.Printf("  ErrorCode: %d\n", momoResp.ErrorCode)
-	fmt.Printf("  Message: %s\n", momoResp.Message)
-	fmt.Printf("  PayUrl: %s\n", momoResp.PayUrl)
 
 	return &momoResp, err
 }
