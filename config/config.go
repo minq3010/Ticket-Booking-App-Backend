@@ -7,6 +7,7 @@ import (
 )
 
 type EnvConfig struct {
+	SVPort	   string `env:"SERVER_PORT,required"`
 	DBPort     string `env:"DB_PORT,required"`
 	DBHost     string `env:"DB_HOST,required"`
 	DBName     string `env:"DB_NAME,required"`
