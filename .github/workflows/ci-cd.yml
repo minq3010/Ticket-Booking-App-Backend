@@ -44,4 +44,4 @@ jobs:
           cd /home/minq/TicketBooking/Ticket-Booking-App-Backend
           git pull origin main
           docker compose pull
-          docker compose up -d app
+          docker compose up -d
