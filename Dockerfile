@@ -1,4 +1,4 @@
-FROM golang:1.23.0-alpine3.19
+FROM golang:alpine
 
 # Set working directory
 WORKDIR /src/app
@@ -7,7 +7,7 @@ WORKDIR /src/app
 RUN apk add --no-cache git curl
 
 # Install air for live reload
-RUN go install github.com/cosmtrek/air@v1.40.4
+# RUN go install github.com/cosmtrek/air@v1.40.4
 
 # Copy go.mod and download deps early
 COPY go.mod go.sum ./
@@ -19,8 +19,10 @@ COPY . .
 # Build cleanup (optional)
 RUN go mod tidy
 
+RUN go build -o main .
+
 # Expose port (for Fiber or similar)
-EXPOSE 3000
+EXPOSE 8080
 
 # Default command: use air to auto-reload
-CMD ["air", "-c", ".air.toml"]
+CMD ["./main"]

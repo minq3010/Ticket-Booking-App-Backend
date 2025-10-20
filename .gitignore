@@ -12,6 +12,7 @@ node_modules/
 # Air tool files
 post_cmd.txt
 pre_cmd.txt
+.air.toml
 
 # IDE configuration files
 .vscode/
@@ -22,16 +23,7 @@ pre_cmd.txt
 # Temporary files
 *.tmp
 *.temp
-*.bak
-*.swp
-*.swo
 
 # Binary files
-*.apk
-*.ipa
-*.exe
-*.dll
-*.so
-*.dmg
 *.bin
 *.out

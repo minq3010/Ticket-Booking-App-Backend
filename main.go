@@ -75,5 +75,5 @@ func main() {
 	handlers.NewStatHandler(privateRoutes.Group("/manager/stat", middlewares.ManagerOnly()), statRepository)
 
 	// port
-	app.Listen(fmt.Sprint(":" + envConfig.DBPort))
+	app.Listen(fmt.Sprint(":" + envConfig.ServerPort))
 }

@@ -89,12 +89,12 @@ func CreateMomoPayment(orderID string, amount int) (*MomoPaymentResponse, error)
 	URL := os.Getenv("URL")
     redirectURL := fmt.Sprintf("%s/api/payment-callback/momo-return", URL)
     ipnURL := fmt.Sprintf("%s/api/payment-callback/momo-ipn", URL)
-	useLocalhost := os.Getenv("USE_LOCALHOST")
-	if useLocalhost == "true" {
-		redirectURL = "http://localhost:26367/api/payment-callback/momo-return"
-		ipnURL = "http://localhost:26367/api/payment-callback/momo-ipn"
-		fmt.Println("⚡ Using localhost URLs for MoMo callbacks")
-	}
+	// useLocalhost := os.Getenv("USE_LOCALHOST")
+	// if useLocalhost == "true" {
+	// 	redirectURL = "http://localhost:8080/api/payment-callback/momo-return"
+	// 	ipnURL = "http://localhost:8080/api/payment-callback/momo-ipn"
+	// 	fmt.Println("⚡ Using localhost URLs for MoMo callbacks")
+	// }
 	// ✅ Debug env variables
 	fmt.Printf("🔧 MoMo Config Check:\n")
 	fmt.Printf("  MOMO_IPN_URL: %s\n", ipnURL)
