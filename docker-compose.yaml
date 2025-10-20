@@ -25,6 +25,8 @@ services:
     networks:
       - ticket-booking-network
     restart: always
+    volumes:
+      - ./.env:/src/app/.env
 
 networks:
   ticket-booking-network:
