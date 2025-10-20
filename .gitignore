@@ -21,6 +21,7 @@ pre_cmd.txt
 .env
 
 # Temporary files
+tmp/
 *.tmp
 *.temp
 
