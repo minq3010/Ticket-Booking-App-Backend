@@ -41,7 +41,7 @@ jobs:
 
       - name: Deploy app
         run: |
-          cd TicketBooking/Ticket-Booking-App-Backend
+          cd /home/minq/TicketBooking/Ticket-Booking-App-Backend
           git pull origin main
           docker compose pull
           docker compose up -d app
