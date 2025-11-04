@@ -1,0 +1,9 @@
+.env
+.env.*
+.air.toml
+.git
+.gitignore
+
+*.DS_Store
+
+.vscode

@@ -17,7 +17,7 @@ services:
 
   app:
     container_name: ticket-booking
-    build: .
+    image: minq3010/ticket-booking-app-backend:latest
     ports:
       - "8080:8080"
     env_file:
