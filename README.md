@@ -14,7 +14,7 @@ git checkout -b <ten-nhanh-cua-ban>
 ```
 
 ### 3. Chuẩn bị file môi trường
-- Cần tạo file `.env` (Liên hệ để nhận file mẫu nếu chưa có)
+- Cần tạo file `.env` (tham khảo cấu trúc biến môi trường trong tài liệu dự án hoặc file mẫu nếu có)
 
 ### 4. Chạy dự án bằng Docker Compose
 ```bash
