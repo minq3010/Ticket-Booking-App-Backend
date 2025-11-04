@@ -12,7 +12,6 @@ node_modules/
 # Air tool files
 post_cmd.txt
 pre_cmd.txt
-.air.toml
 
 # IDE configuration files
 .vscode/
